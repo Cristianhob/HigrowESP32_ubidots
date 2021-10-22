@@ -32,8 +32,9 @@ const char* mqtt_server = "industrial.api.ubidots.com";
 const char topic[] = "/v1.6/devices/test";
 String device = "sensor_test";
 String data_mqtt = "";
-char mensaje[25] = "";
+char mensaje[126] = "";
 char vacio[] = "";
+unsigned int len_msg = 0;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -49,6 +50,16 @@ int agua = 1200;
 #define BUILTIN_LED 16
 
 unsigned long lastMsg = 0;
+
+String Humedad = "hum";
+String Temperatura = "temp";
+String Suelo = "hum_suelo";
+String Sensacion_termica = "sen_term";
+String Hum;
+String Temp;
+String Cap;
+String Sensa;
+
 
 void setup_wifi() {
   delay(10);
@@ -144,8 +155,6 @@ void loop() {
   //Captura dato sensor capacitivo
   unsigned int hum_suelo = analogRead(SOILCAPPIN);
   hum_suelo = map(hum_suelo, agua, aire, 100, 0);
-  //hum_suelo = constrain(hum_suelo, 100, 0);
-
   //  Serial.print(F("Hum: "));
   //  Serial.print(h);
   //  Serial.print(F("% / Temp: "));
@@ -155,22 +164,25 @@ void loop() {
   //  Serial.print(F("°C / Humedad suelo: "));
   //  Serial.print(hum_suelo);
   //  Serial.println(F("% "));
-
-
-  //const char msg[] = "{\"sensor_test\": 100}";//"\'{\"sensor_test\": {\"value\":100}}\'";
-  //String msg = "{\"sensor_test\": 100}";
-  
-  strcpy(mensaje,vacio);
-
+  strcpy(mensaje, vacio);
   String value = String(random(0, 100));
-
-  data_mqtt = "{\"";
-  data_mqtt += device;
-  data_mqtt += "\":";
-  data_mqtt += value;
-  data_mqtt += "}";
-
-  unsigned int len_msg = data_mqtt.length() + 1;
+  Hum = String(h);
+  Temp = String(t);
+  Cap = String(hum_suelo);
+  Sensa = String(hic);
+    data_mqtt = "{\"sensor_test\": {\"value\": 200},\"hum\":{\"value\": 60},\"temp\":{\"value\": 60},\"hum_suelo\":{\"value\": 60},\"sen_term\":{\"value\": 60}}";
+//  data_mqtt = "{\"";
+//  data_mqtt += "hum";//Suelo;
+//  data_mqtt += "\":{value:";
+//  data_mqtt += Hum;
+//  data_mqtt += "},\"";
+//  data_mqtt += "temp";
+//  data_mqtt += "\":{value:";
+//  data_mqtt += Temp;
+//  data_mqtt += "}";
+//  data_mqtt += "}";
+  
+  len_msg = data_mqtt.length() + 1;
   data_mqtt.toCharArray(mensaje, len_msg);
   Serial.print(len_msg);
   Serial.print(" - ");
@@ -178,7 +190,7 @@ void loop() {
 
 
   unsigned long now = millis();
-  if (now - lastMsg > 3000) {
+  if (now - lastMsg > 6000) {
     lastMsg = now;
     Serial.print(data_mqtt);
     Serial.print(" - ");
@@ -186,5 +198,5 @@ void loop() {
     client.publish(topic, mensaje);
   }
 
-  delay(2000);
+  delay(6000);
 }
