@@ -10,14 +10,13 @@
   https://ubidots.com/docs/hw/#mqtt
 
   PENDIENTE
-  - SUBIR PARAMETROS A UBIDOTS
-  - AGREGAR PAREMETRO DE ID
+  - AGREGAR COORDENADA
   - AGREGAR NIVEL DE VOLTAJE BATERIA
   - DOCUMENTAR, REDACTAR README EN GITHUB
   - INTEGRAR MODO SLEEP
+  - generar estructura con nombres variables
 
 */
-
 
 #include <WiFi.h>         //https://www.arduino.cc/en/Reference/WiFiClientConnected
 #include <PubSubClient.h> //https://pubsubclient.knolleary.net/api
@@ -32,7 +31,7 @@ const char* mqtt_server = "industrial.api.ubidots.com";
 const char topic[] = "/v1.6/devices/test";
 String device = "sensor_test";
 String data_mqtt = "";
-char mensaje[126] = "";
+char mensaje[110] = "";
 char vacio[] = "";
 unsigned int len_msg = 0;
 
@@ -59,7 +58,6 @@ String Hum;
 String Temp;
 String Cap;
 String Sensa;
-
 
 void setup_wifi() {
   delay(10);
@@ -102,14 +100,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    // Create a random client ID
+    Serial.print("Intentando conexión MQTT...");
+    // Crea ID aleatoria
     String clientId = "ESP8266Client-";
     clientId += String(random(0xffff), HEX);
     const char username[] = "BBFF-0wdH6q6HmvTut4KSa2E63xGYyTRzZj";
     const char pass[] = " ";
 
-    // Attempt to connect
+    // Prueba de conexión
     if (client.connect(clientId.c_str(), username, pass)) {
       Serial.println("connected");
       // Once connected, publish an announcement...
@@ -170,24 +168,32 @@ void loop() {
   Temp = String(t);
   Cap = String(hum_suelo);
   Sensa = String(hic);
-    data_mqtt = "{\"sensor_test\": {\"value\": 200},\"hum\":{\"value\": 60},\"temp\":{\"value\": 60},\"hum_suelo\":{\"value\": 60},\"sen_term\":{\"value\": 60}}";
-//  data_mqtt = "{\"";
-//  data_mqtt += "hum";//Suelo;
-//  data_mqtt += "\":{value:";
-//  data_mqtt += Hum;
-//  data_mqtt += "},\"";
-//  data_mqtt += "temp";
-//  data_mqtt += "\":{value:";
-//  data_mqtt += Temp;
-//  data_mqtt += "}";
-//  data_mqtt += "}";
-  
+
+  //data_mqtt = "{\"sensor_test\": {\"value\": 200},\"hum\":{\"value\": 60},\"temp\":{\"value\": 60},\"hum_suelo\":{\"value\": 60},\"sen_term\":{\"value\": 60}}";
+  data_mqtt = "{\"";
+  data_mqtt += Humedad;
+  data_mqtt += "\":{\"value\": ";
+  data_mqtt += Hum;
+  data_mqtt += "},\"";
+  data_mqtt += Temperatura;
+  data_mqtt += "\":{\"value\": ";
+  data_mqtt += Temp;
+  data_mqtt += "},\"";
+  data_mqtt += Suelo;
+  data_mqtt += "\":{\"value\": ";
+  data_mqtt += Cap;
+  data_mqtt += "},\"";
+  data_mqtt += Sensacion_termica;
+  data_mqtt += "\":{\"value\": ";
+  data_mqtt += Sensa;
+  data_mqtt += "}";
+  data_mqtt += "}";
+
   len_msg = data_mqtt.length() + 1;
   data_mqtt.toCharArray(mensaje, len_msg);
   Serial.print(len_msg);
   Serial.print(" - ");
   Serial.println(sizeof(mensaje));
-
 
   unsigned long now = millis();
   if (now - lastMsg > 6000) {
@@ -197,6 +203,5 @@ void loop() {
     Serial.println(mensaje);
     client.publish(topic, mensaje);
   }
-
   delay(6000);
 }
